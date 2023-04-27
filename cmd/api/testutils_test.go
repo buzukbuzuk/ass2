@@ -49,7 +49,7 @@ func (ts *testServer) get(t *testing.T, urlPath string) (int, http.Header, strin
 	return rs.StatusCode, rs.Header, string(body)
 }
 
-func(ts *testServer) deleteReq(t *testing.T, urlPath string)(int, http.Header, string) {
+func (ts *testServer) deleteReq(t *testing.T, urlPath string) (int, http.Header, string) {
 	req, err := http.NewRequest(http.MethodDelete, ts.URL+urlPath, nil)
 	if err != nil {
 		t.Fatal(err)
@@ -71,7 +71,7 @@ func(ts *testServer) deleteReq(t *testing.T, urlPath string)(int, http.Header, s
 
 func (ts *testServer) postForm(t *testing.T, urlPath string, data []byte) (int, http.Header, string) {
 	reader := bytes.NewReader(data)
-	rs, err := ts.Client().Post(ts.URL+urlPath,"application/json" , reader)
+	rs, err := ts.Client().Post(ts.URL+urlPath, "application/json", reader)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -83,5 +83,28 @@ func (ts *testServer) postForm(t *testing.T, urlPath string, data []byte) (int, 
 	}
 	bytes.TrimSpace(body)
 
+	return rs.StatusCode, rs.Header, string(body)
+}
+
+func (ts *testServer) patchForm(t *testing.T, urlPath string, data []byte, method string) (int, http.Header, string) {
+	if method != "PUT" && method != "PATCH" {
+		t.Fatal("Only PUT and PATCH are supported")
+	}
+	reader := bytes.NewReader(data)
+	req, err := http.NewRequest(method, ts.URL+urlPath, reader)
+	req.Header.Set("Content-Type", "application/json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	rs, err := ts.Client().Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rs.Body.Close()
+	body, err := io.ReadAll(rs.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bytes.TrimSpace(body)
 	return rs.StatusCode, rs.Header, string(body)
 }
